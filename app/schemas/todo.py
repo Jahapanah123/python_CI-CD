@@ -9,7 +9,7 @@ class TodoBase(BaseModel):
 # create todo ke liye
 class TodoCreate(TodoBase):
     title : str = Field(..., min_length=1, max_length=100)
-    pass
+    description : Optional[str] = Field(None, max_length=500)
 
 class TodoUpdate(BaseModel):
     title : Optional[str] = None

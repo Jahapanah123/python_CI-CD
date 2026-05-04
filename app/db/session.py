@@ -1,19 +1,18 @@
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, AsyncConnection
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
-# # Engine with 5s statement timeout
+engine = create_async_engine(
+    settings.DATABASE_URL, 
+    echo=True,
+    )
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"options": f"-c statement_timeout={settings.DB_TIMEOUT}"}
-)
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session

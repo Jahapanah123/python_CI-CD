@@ -16,9 +16,9 @@ def get_todo_service(db: Session = Depends(get_db)) -> TodoService:
     return TodoService(repo)
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_todo(payload: TodoCreate, service: TodoService = Depends(get_todo_service)):
+async def create_todo(payload: TodoCreate, service: TodoService = Depends(get_todo_service)):
     try:
-        return service.create_task(payload)
+        return await service.create_task(payload)
     except errors.ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except errors.ConflictError as e: # Catch the specific error raised in service
@@ -27,9 +27,9 @@ def create_todo(payload: TodoCreate, service: TodoService = Depends(get_todo_ser
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @router.get("/{todo_id}")
-def read_todo(todo_id: int, service: TodoService = Depends(get_todo_service)):
+async def read_todo(todo_id: int, service: TodoService = Depends(get_todo_service)):
     try:
-        return service.get_task(todo_id)
+        return await service.get_task(todo_id)
     except errors.ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except errors.NotFoundError as e:
@@ -38,16 +38,16 @@ def read_todo(todo_id: int, service: TodoService = Depends(get_todo_service)):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @router.get("/")
-def read_todos(skip: int = 0, limit: int = 10, service: TodoService = Depends(get_todo_service)):
+async def read_todos(skip: int = 0, limit: int = 10, service: TodoService = Depends(get_todo_service)):
     try : 
-        return service.list_tasks(skip=skip, limit=limit)
+        return await service.list_tasks(skip=skip, limit=limit)
     except errors.ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/{todo_id}")
-def update_todo(todo_id: int, payload: TodoUpdate, service: TodoService = Depends(get_todo_service)):
+async def update_todo(todo_id: int, payload: TodoUpdate, service: TodoService = Depends(get_todo_service)):
     try:
-        return service.update_task(todo_id, payload)
+        return await service.update_task(todo_id, payload)
     except errors.NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except errors.ValidationError as e:
@@ -58,9 +58,9 @@ def update_todo(todo_id: int, payload: TodoUpdate, service: TodoService = Depend
         raise HTTPException(status_code=500, detail= "internal server error")
     
 @router.delete("/{todo_id}", status_code=status.HTTP_200_OK)
-def delete_todo(todo_id: int, service: TodoService = Depends(get_todo_service)):
+async def delete_todo(todo_id: int, service: TodoService = Depends(get_todo_service)):
     try:
-        service.remove_task(todo_id)
+        await service.remove_task(todo_id)
         return{"message": " deleted successfully"}
     except errors.ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))

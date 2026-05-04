@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from datetime import datetime, timezone
-from app.db.base_class import Base
+from sqlalchemy.orm import declarative_base
+
+Base = declarative_base() #sqlAlchemyのモデルのベースクラス
 
 class Todo(Base):
     __tablename__ = "todos"

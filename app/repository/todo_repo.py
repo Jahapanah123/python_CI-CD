@@ -1,42 +1,51 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.todo import Todo
 from app.schemas.todo import TodoCreate, TodoUpdate
 
+
 class TodoRepository:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def create(self, obj_in: TodoCreate) -> Todo:
+    async def create(self, obj_in: TodoCreate) -> Todo:
         db_obj = Todo(**obj_in.model_dump())
+
         self.db.add(db_obj)
-        self.db.commit()
-        self.db.refresh(db_obj)
+        await self.db.commit()
+        await self.db.refresh(db_obj)
+
         return db_obj
 
-    def get_by_id(self, todo_id: int) -> Todo | None:
-        return self.db.query(Todo).filter(Todo.id == todo_id).first()
+    async def get_by_id(self, todo_id: int) -> Todo | None:
+        result = await self.db.execute(
+            select(Todo).where(Todo.id == todo_id)
+        )
+        return result.scalar_one_or_none()
 
-    def get_multi(self, skip: int, limit: int) -> list[Todo]:
-        return self.db.query(Todo).offset(skip).limit(limit).all()
+    async def get_multi(self, skip: int = 0, limit: int = 100) -> list[Todo]:
+        result = await self.db.execute(
+            select(Todo).offset(skip).limit(limit)
+        )
+        return result.scalars().all()
 
-    def update(self, db_obj: Todo, obj_in: TodoUpdate) -> Todo:
-       # Convert Pydantic model to dict
+    async def get_by_title(self, title: str) -> Todo | None:
+        result = await self.db.execute(
+            select(Todo).where(Todo.title == title)
+        )
+        return result.scalar_one_or_none()
+
+    async def update(self, db_obj: Todo, obj_in: TodoUpdate) -> Todo:
         update_data = obj_in.model_dump(exclude_unset=True)
+
         for field, value in update_data.items():
             setattr(db_obj, field, value)
-            
-        self.db.add(db_obj)
-        self.db.commit()
-        self.db.refresh(db_obj)
+
+        await self.db.commit()
+        await self.db.refresh(db_obj)
+
         return db_obj
 
-    def delete(self, todo_id: int) -> bool:
-        db_obj = self.get_by_id(todo_id)
-        if db_obj:
-            self.db.delete(db_obj)
-            self.db.commit()
-            return True
-        return False
-    
-    def get_by_title(self, title : str):
-        return self.db.query(Todo).filter(Todo.title == title).first()
+    async def delete(self, db_obj: Todo) -> None:
+        await self.db.delete(db_obj)
+        await self.db.commit()
