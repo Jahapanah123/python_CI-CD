@@ -7,7 +7,8 @@ from alembic import context
 import sys
 from os.path import abspath, dirname
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
-from app.db.base_class import Base
+from app.models import Base
+from app.models.user import User, RefreshToken
 from app.models.todo import Todo
 
 
