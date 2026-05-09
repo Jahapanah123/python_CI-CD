@@ -32,7 +32,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
     repo = UserRepository(db)
-    return AuthService(repo, db)
+    return AuthService(repo)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
